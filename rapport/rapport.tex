@@ -1,0 +1,858 @@
+\documentclass[12pt,a4paper]{report}
+
+% ==================== PACKAGES ====================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{caption}
+\usepackage{tcolorbox}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, fit, backgrounds}
+
+% ==================== CONFIGURATION ====================
+\geometry{margin=2.5cm}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    urlcolor=blue!60!black,
+    citecolor=blue!60!black
+}
+
+% Code listing style
+\definecolor{codebg}{HTML}{F5F5F5}
+\definecolor{codegreen}{HTML}{28A745}
+\definecolor{codepurple}{HTML}{6F42C1}
+\definecolor{codegray}{HTML}{6A737D}
+\definecolor{codeblue}{HTML}{0366D6}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{codebg},
+    commentstyle=\color{codegray}\itshape,
+    keywordstyle=\color{codepurple}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2,
+    frame=single,
+    rulecolor=\color{gray!30}
+}
+\lstset{style=mystyle}
+
+% Headers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{Gestion des Lits Hospitaliers}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% Title formatting
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{blue!60!black}}
+  {\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+% ==================== DOCUMENT ====================
+\begin{document}
+
+% ==================== PAGE DE GARDE ====================
+\begin{titlepage}
+    \centering
+    \vspace*{1cm}
+
+    {\Large\textbf{Universit\'e Mohammed V de Rabat}}\\[0.3cm]
+    {\large\textbf{\'Ecole Nationale Sup\'erieure d'Arts et M\'etiers}}\\[0.2cm]
+    {\normalsize Fili\`ere INDIA -- 2\`eme ann\'ee -- S4}\\[0.2cm]
+    {\normalsize Ann\'ee Universitaire : 2025/2026}
+
+    \vspace{1.5cm}
+    \rule{\textwidth}{1.5pt}\\[0.5cm]
+    {\Huge\textbf{Gestion des Lits et des\\[0.3cm] Flux Hospitaliers}}\\[0.5cm]
+    {\Large Architecture Microservices avec Spring Boot \& Docker}\\[0.3cm]
+    \rule{\textwidth}{1.5pt}
+
+    \vspace{1.5cm}
+    {\large\textbf{Mini Projet -- Architecture Distribu\'ee}}
+
+    \vspace{2cm}
+
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        {\large\textbf{R\'ealis\'e par :}}\\[0.5cm]
+        {\large Aymane \textsc{Issami}}\\[0.2cm]
+        {\large Houssam \textsc{Kichchou}}
+    \end{minipage}
+    \hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        {\large\textbf{Encadr\'e par :}}\\[0.5cm]
+        {\large Pr. A. \textsc{El Qadi}}
+    \end{minipage}
+
+    \vfill
+    {\large Avril 2026}
+\end{titlepage}
+
+% ==================== TABLE DES MATIERES ====================
+\tableofcontents
+\newpage
+
+% ==================== INTRODUCTION ====================
+\chapter{Introduction}
+
+\section{Contexte du projet}
+
+Dans le cadre du module d'Architecture Distribu\'ee, ce mini projet vise \`a concevoir et d\'evelopper un syst\`eme de gestion des lits et des flux hospitaliers en utilisant une architecture microservices. Le syst\`eme permet d'optimiser l'affectation des lits, le transfert entre services et la planification des sorties pour r\'eduire les temps d'attente, notamment aux urgences.
+
+La gestion efficace des lits hospitaliers repr\'esente un enjeu majeur pour les \'etablissements de sant\'e. Une mauvaise gestion peut entra\^iner :
+\begin{itemize}
+    \item Des temps d'attente excessifs aux urgences
+    \item Une sous-utilisation ou surcharge de certains services
+    \item Des conflits d'affectation entre services
+    \item Un manque de visibilit\'e sur la capacit\'e disponible
+\end{itemize}
+
+\section{Objectifs}
+
+\begin{enumerate}
+    \item \textbf{Gestion des lits} : Suivre l'\'etat de chaque lit (libre, occup\'e, r\'eserv\'e, en nettoyage) avec un cycle de vie complet
+    \item \textbf{Flux patients} : G\'erer la trajectoire des patients de l'admission \`a la sortie, incluant les transferts inter-services
+    \item \textbf{Pr\'ediction de capacit\'e} : Anticiper les besoins en lits via des r\`egles de pr\'ediction
+    \item \textbf{Notifications op\'erationnelles} : Alerter les \'equipes (brancardage, nettoyage, transferts)
+    \item \textbf{Tableau de bord} : Fournir une vue agr\'eg\'ee en temps r\'eel avec des indicateurs cl\'es
+\end{enumerate}
+
+\section{Acteurs du syst\`eme}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{lX}
+        \toprule
+        \textbf{Acteur} & \textbf{R\^ole} \\
+        \midrule
+        Urgentistes / M\'edecins r\'egulateurs & Gestion des admissions d'urgence, d\'ecisions de transfert \\
+        Cadre de sant\'e / Gestionnaire de lits & Affectation des lits, suivi de la disponibilit\'e \\
+        Brancardiers / Logistique interne & Transport des patients, nettoyage des lits \\
+        Direction & Consultation du tableau de bord op\'erationnel \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Acteurs du syst\`eme}
+\end{table}
+
+% ==================== ARCHITECTURE ====================
+\chapter{Architecture du Syst\`eme}
+
+\section{Vue d'ensemble}
+
+Le syst\`eme est construit selon une architecture microservices, o\`u chaque service est ind\'ependant, d\'eployable s\'epar\'ement et communique via des APIs REST. Un service de d\'ecouverte (Eureka) assure le registre des services et un API Gateway fournit un point d'entr\'ee unique.
+
+\section{Diagramme d'architecture}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        node distance=1.5cm and 2cm,
+        service/.style={rectangle, draw=blue!60!black, fill=blue!10, text width=3.2cm, minimum height=1.2cm, align=center, rounded corners=3pt, font=\small\bfseries},
+        infra/.style={rectangle, draw=green!60!black, fill=green!10, text width=3.2cm, minimum height=1.2cm, align=center, rounded corners=3pt, font=\small\bfseries},
+        db/.style={cylinder, draw=orange!60!black, fill=orange!10, shape border rotate=90, aspect=0.15, minimum height=1cm, minimum width=2cm, font=\scriptsize\bfseries},
+        arrow/.style={-{Stealth[length=2mm]}, thick, gray}
+    ]
+        % Gateway
+        \node[infra] (gw) {API Gateway\\{\scriptsize Port 8080}};
+
+        % Services row 1
+        \node[service, below left=1.5cm and 2.5cm of gw] (bed) {Bed Management\\{\scriptsize Port 8081}};
+        \node[service, below left=1.5cm and -0.2cm of gw] (patient) {Patient Flow\\{\scriptsize Port 8082}};
+        \node[service, below right=1.5cm and -0.2cm of gw] (capacity) {Capacity\\Prediction\\{\scriptsize Port 8083}};
+        \node[service, below right=1.5cm and 2.5cm of gw] (notif) {Notification Ops\\{\scriptsize Port 8084}};
+
+        % Dashboard
+        \node[service, below=3.5cm of gw] (dash) {Dashboard\\{\scriptsize Port 8085}};
+
+        % Eureka
+        \node[infra, above=1.5cm of gw] (eureka) {Eureka Server\\{\scriptsize Port 8761}};
+
+        % Databases
+        \node[db, below=0.8cm of bed] (db1) {MySQL\\bed\_db};
+        \node[db, below=0.8cm of patient] (db2) {MySQL\\patient\_db};
+        \node[db, below=0.8cm of capacity] (db3) {MySQL\\capacity\_db};
+        \node[db, below=0.8cm of notif] (db4) {MySQL\\notif\_db};
+
+        % Arrows from gateway
+        \draw[arrow] (gw) -- (bed);
+        \draw[arrow] (gw) -- (patient);
+        \draw[arrow] (gw) -- (capacity);
+        \draw[arrow] (gw) -- (notif);
+        \draw[arrow] (gw) -- (dash);
+
+        % Arrows to Eureka
+        \draw[arrow, dashed, blue!50] (gw) -- (eureka);
+        \draw[arrow, dashed, blue!50] (bed.north) .. controls +(up:1cm) and +(left:2cm) .. (eureka.west);
+        \draw[arrow, dashed, blue!50] (notif.north) .. controls +(up:1cm) and +(right:2cm) .. (eureka.east);
+
+        % Arrows to DBs
+        \draw[arrow, orange!70] (bed) -- (db1);
+        \draw[arrow, orange!70] (patient) -- (db2);
+        \draw[arrow, orange!70] (capacity) -- (db3);
+        \draw[arrow, orange!70] (notif) -- (db4);
+
+        % Dashboard aggregation
+        \draw[arrow, dashed, red!50] (dash) -- (bed);
+        \draw[arrow, dashed, red!50] (dash) -- (patient);
+        \draw[arrow, dashed, red!50] (dash) -- (capacity);
+        \draw[arrow, dashed, red!50] (dash) -- (notif);
+
+    \end{tikzpicture}
+    \caption{Diagramme d'architecture microservices}
+\end{figure}
+
+\section{Description des microservices}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{llX}
+        \toprule
+        \textbf{Service} & \textbf{Port} & \textbf{R\^ole} \\
+        \midrule
+        discovery-service & 8761 & Registre Eureka -- d\'ecouverte automatique des services \\
+        gateway-service & 8080 & Point d'entr\'ee unique, routage, CORS \\
+        bed-management-service & 8081 & CRUD lits, cycle de vie des statuts, affectation \\
+        patient-flow-service & 8082 & Admission, transferts, sorties, trajectoire patient \\
+        capacity-prediction-service & 8083 & Pr\'ediction d'occupation, tendances, niveaux de risque \\
+        notification-ops-service & 8084 & Alertes nettoyage, brancardage, transferts, capacit\'e \\
+        dashboard-service & 8085 & Agr\'egation temps r\'eel, KPIs, tableau de bord \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Liste des microservices}
+\end{table}
+
+\section{Technologies utilis\'ees}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{lX}
+        \toprule
+        \textbf{Technologie} & \textbf{Usage} \\
+        \midrule
+        Java 21 & Langage de programmation \\
+        Spring Boot 3.2.4 & Framework applicatif \\
+        Spring Cloud 2023.0.0 & Eureka Discovery, Gateway \\
+        Spring Data JPA & Couche de persistance (Hibernate) \\
+        MySQL 8.0 & Base de donn\'ees relationnelle (production) \\
+        H2 Database & Base de donn\'ees embarqu\'ee (d\'eveloppement) \\
+        Docker \& Docker Compose & Conteneurisation et orchestration \\
+        OpenAPI 3 / Swagger & Documentation interactive des APIs \\
+        Maven & Gestion des d\'ependances et build \\
+        WebClient (WebFlux) & Communication inter-services \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Stack technologique}
+\end{table}
+
+% ==================== MODELE DE DONNEES ====================
+\chapter{Mod\`ele de Donn\'ees}
+
+\section{Entit\'e Bed (Lit)}
+
+L'entit\'e \texttt{Bed} repr\'esente un lit hospitalier avec son \'etat actuel et ses m\'etadonn\'ees.
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{llX}
+        \toprule
+        \textbf{Champ} & \textbf{Type} & \textbf{Description} \\
+        \midrule
+        id & Long & Identifiant unique (auto-g\'en\'er\'e) \\
+        bedNumber & String & Num\'ero du lit (unique) \\
+        ward & String & Service hospitalier (Urgences, Cardiologie...) \\
+        roomNumber & String & Num\'ero de la chambre \\
+        floor & Integer & \'Etage \\
+        bedType & BedType & STANDARD, ICU, PEDIATRIC, MATERNITY \\
+        status & BedStatus & FREE, OCCUPIED, RESERVED, CLEANING \\
+        currentPatientId & Long & R\'ef\'erence au patient actuel (nullable) \\
+        lastStatusChange & LocalDateTime & Horodatage du dernier changement \\
+        notes & String & Notes libres \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Mod\`ele de donn\'ees -- Bed}
+\end{table}
+
+\subsection{Cycle de vie d'un lit}
+
+Le statut d'un lit suit une machine \`a \'etats pr\'ecise :
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        state/.style={rectangle, draw=blue!60!black, fill=blue!10, minimum width=2.5cm, minimum height=1cm, rounded corners=5pt, font=\bfseries},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+    ]
+        \node[state, fill=green!20, draw=green!60!black] (free) {FREE};
+        \node[state, fill=red!20, draw=red!60!black, right=3cm of free] (occupied) {OCCUPIED};
+        \node[state, fill=yellow!20, draw=yellow!60!black, below=2cm of free] (reserved) {RESERVED};
+        \node[state, fill=orange!20, draw=orange!60!black, below=2cm of occupied] (cleaning) {CLEANING};
+
+        \draw[arrow] (free) -- node[above, font=\scriptsize] {Affectation patient} (occupied);
+        \draw[arrow] (free) -- node[left, font=\scriptsize] {R\'eservation} (reserved);
+        \draw[arrow] (reserved) -- node[below, font=\scriptsize, sloped] {Patient arrive} (occupied);
+        \draw[arrow] (reserved) -- node[right, font=\scriptsize, pos=0.3] {Annulation} (free);
+        \draw[arrow] (occupied) -- node[right, font=\scriptsize] {Lib\'eration} (cleaning);
+        \draw[arrow] (cleaning) -- node[below, font=\scriptsize] {Nettoyage termin\'e} (free);
+    \end{tikzpicture}
+    \caption{Machine \`a \'etats du statut d'un lit}
+\end{figure}
+
+\textbf{Transitions valides :}
+\begin{itemize}
+    \item \texttt{FREE} $\rightarrow$ \texttt{OCCUPIED} : Affectation directe d'un patient
+    \item \texttt{FREE} $\rightarrow$ \texttt{RESERVED} : R\'eservation pour une admission programm\'ee
+    \item \texttt{RESERVED} $\rightarrow$ \texttt{OCCUPIED} : Le patient arrive et occupe le lit r\'eserv\'e
+    \item \texttt{RESERVED} $\rightarrow$ \texttt{FREE} : Annulation de la r\'eservation
+    \item \texttt{OCCUPIED} $\rightarrow$ \texttt{CLEANING} : Le patient quitte le lit (sortie ou transfert)
+    \item \texttt{CLEANING} $\rightarrow$ \texttt{FREE} : Le nettoyage est termin\'e, le lit est disponible
+\end{itemize}
+
+Toute autre transition est rejet\'ee par le service avec un message d'erreur explicite.
+
+\section{Entit\'e Patient}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{llX}
+        \toprule
+        \textbf{Champ} & \textbf{Type} & \textbf{Description} \\
+        \midrule
+        id & Long & Identifiant unique \\
+        firstName / lastName & String & Nom et pr\'enom \\
+        dateOfBirth & LocalDate & Date de naissance \\
+        gender & String & Genre (M/F) \\
+        nationalId & String & CIN / identifiant national (unique) \\
+        contactPhone & String & T\'el\'ephone \\
+        emergencyContact & String & Contact d'urgence \\
+        currentStatus & PatientStatus & REGISTERED, ADMITTED, IN\_TRANSFER, DISCHARGED, EMERGENCY \\
+        currentWard & String & Service actuel \\
+        admissionDate & LocalDateTime & Date d'admission \\
+        dischargeDate & LocalDateTime & Date de sortie \\
+        medicalNotes & String & Notes m\'edicales \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Mod\`ele de donn\'ees -- Patient}
+\end{table}
+
+\subsection{Trajectoire du patient}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        state/.style={rectangle, draw=blue!60!black, fill=blue!10, minimum width=2.8cm, minimum height=1cm, rounded corners=5pt, font=\small\bfseries},
+        arrow/.style={-{Stealth[length=2.5mm]}, thick}
+    ]
+        \node[state] (reg) {REGISTERED};
+        \node[state, right=2.5cm of reg] (adm) {ADMITTED};
+        \node[state, below=1.5cm of adm] (trans) {IN\_TRANSFER};
+        \node[state, right=2.5cm of adm] (dis) {DISCHARGED};
+        \node[state, above=1.5cm of adm, fill=red!20, draw=red!60!black] (emer) {EMERGENCY};
+
+        \draw[arrow] (reg) -- node[above, font=\scriptsize] {Admission} (adm);
+        \draw[arrow] (adm) -- node[left, font=\scriptsize] {Transfert} (trans);
+        \draw[arrow] (trans) -- node[right, font=\scriptsize] {Compl\'et\'e} (adm);
+        \draw[arrow] (adm) -- node[above, font=\scriptsize] {Sortie} (dis);
+        \draw[arrow] (reg) -- node[left, font=\scriptsize, sloped] {Urgence} (emer);
+    \end{tikzpicture}
+    \caption{Diagramme d'\'etats du patient}
+\end{figure}
+
+\section{Entit\'e PatientTransfer}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{llX}
+        \toprule
+        \textbf{Champ} & \textbf{Type} & \textbf{Description} \\
+        \midrule
+        id & Long & Identifiant unique \\
+        patientId & Long & R\'ef\'erence au patient \\
+        fromWard & String & Service d'origine \\
+        toWard & String & Service de destination \\
+        transferDate & LocalDateTime & Date du transfert \\
+        reason & String & Motif du transfert \\
+        authorizedBy & String & M\'edecin autorisant \\
+        status & TransferStatus & PENDING, IN\_PROGRESS, COMPLETED, CANCELLED \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Mod\`ele de donn\'ees -- PatientTransfer}
+\end{table}
+
+\section{Entit\'e OccupancyRecord}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{llX}
+        \toprule
+        \textbf{Champ} & \textbf{Type} & \textbf{Description} \\
+        \midrule
+        id & Long & Identifiant unique \\
+        ward & String & Service hospitalier \\
+        date & LocalDate & Date de l'enregistrement \\
+        hour & Integer & Heure (0--23) \\
+        totalBeds & int & Nombre total de lits \\
+        occupiedBeds & int & Nombre de lits occup\'es \\
+        occupancyRate & double & Taux d'occupation \\
+        recordedAt & LocalDateTime & Horodatage \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Mod\`ele de donn\'ees -- OccupancyRecord}
+\end{table}
+
+\section{Entit\'e Notification}
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{llX}
+        \toprule
+        \textbf{Champ} & \textbf{Type} & \textbf{Description} \\
+        \midrule
+        id & Long & Identifiant unique \\
+        type & NotificationType & BED\_RELEASE, CLEANING\_REQUIRED, TRANSFER\_ALERT, etc. \\
+        title & String & Titre de la notification \\
+        message & String & Corps du message \\
+        targetWard & String & Service concern\'e \\
+        priority & Priority & LOW, MEDIUM, HIGH, URGENT \\
+        status & NotificationStatus & PENDING, SENT, READ, ARCHIVED \\
+        createdAt & LocalDateTime & Date de cr\'eation \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Mod\`ele de donn\'ees -- Notification}
+\end{table}
+
+% ==================== FLUX DE DONNEES ====================
+\chapter{Flux de Donn\'ees et Communication Inter-services}
+
+\section{Flux principaux}
+
+\begin{figure}[H]
+    \centering
+    \begin{tikzpicture}[
+        box/.style={rectangle, draw, fill=blue!10, minimum width=3cm, minimum height=0.8cm, rounded corners=3pt, font=\small},
+        arrow/.style={-{Stealth[length=2mm]}, thick},
+        label/.style={font=\scriptsize, fill=white, inner sep=1pt}
+    ]
+        \node[box] (client) at (0,0) {Client / Postman};
+        \node[box] (gw) at (0,-1.5) {API Gateway};
+        \node[box] (bed) at (-4,-3.5) {Bed Management};
+        \node[box] (patient) at (0,-3.5) {Patient Flow};
+        \node[box] (notif) at (4,-3.5) {Notification Ops};
+        \node[box] (capacity) at (-4,-5.5) {Capacity Prediction};
+        \node[box] (dash) at (4,-5.5) {Dashboard};
+
+        \draw[arrow] (client) -- (gw);
+        \draw[arrow] (gw) -- (bed);
+        \draw[arrow] (gw) -- (patient);
+        \draw[arrow] (gw) -- (notif);
+
+        \draw[arrow, dashed, red] (capacity) -- node[label] {GET stats} (bed);
+        \draw[arrow, dashed, red] (dash) -- node[label, sloped] {GET} (bed);
+        \draw[arrow, dashed, red] (dash) -- node[label] {GET} (patient);
+        \draw[arrow, dashed, red] (dash) -- node[label, sloped] {GET} (capacity);
+        \draw[arrow, dashed, red] (dash) -- node[label] {GET} (notif);
+    \end{tikzpicture}
+    \caption{Flux de communication entre microservices}
+\end{figure}
+
+\section{Sc\'enario : Admission compl\`ete d'un patient}
+
+Voici le flux complet d'un sc\'enario typique :
+
+\begin{enumerate}
+    \item \textbf{Enregistrement} : \texttt{POST /api/patients} -- Cr\'eation du dossier patient (statut: REGISTERED)
+    \item \textbf{V\'erification des lits} : \texttt{GET /api/beds?ward=Urgences\&status=FREE} -- Recherche d'un lit disponible
+    \item \textbf{Admission} : \texttt{POST /api/patients/\{id\}/admit} -- Le patient est admis (statut: ADMITTED)
+    \item \textbf{Affectation du lit} : \texttt{POST /api/beds/assign} -- Le lit passe en OCCUPIED
+    \item \textbf{Notification} : \texttt{POST /api/notifications} -- Alerte au service concern\'e
+    \item \textbf{Transfert} (si n\'ecessaire) : \texttt{POST /api/patients/\{id\}/transfer} -- Demande de transfert
+    \item \textbf{Lib\'eration du lit} : \texttt{POST /api/beds/\{id\}/release} -- Le lit passe en CLEANING
+    \item \textbf{Nettoyage} : \texttt{PUT /api/beds/\{id\}/status} -- Le lit repasse en FREE
+    \item \textbf{Sortie} : \texttt{POST /api/patients/\{id\}/discharge} -- Le patient sort (statut: DISCHARGED)
+\end{enumerate}
+
+\section{Communication inter-services}
+
+La communication entre microservices se fait via \textbf{WebClient} (Spring WebFlux), un client HTTP r\'eactif non-bloquant. Les services concern\'es sont :
+
+\begin{itemize}
+    \item \textbf{capacity-prediction-service} : Appelle \texttt{bed-management-service} pour obtenir les statistiques d'occupation actuelles
+    \item \textbf{dashboard-service} : Appelle les 4 autres services pour agr\'eger les donn\'ees en temps r\'eel, avec des fallbacks en cas d'indisponibilit\'e
+\end{itemize}
+
+% ==================== API REST ====================
+\chapter{API REST}
+
+Chaque microservice expose une API REST document\'ee via OpenAPI 3 (Swagger). Les APIs sont accessibles directement ou via le Gateway (port 8080).
+
+\section{Bed Management Service -- \texttt{/api/beds}}
+
+\begin{longtable}{llp{7cm}}
+    \toprule
+    \textbf{M\'ethode} & \textbf{Endpoint} & \textbf{Description} \\
+    \midrule
+    \endhead
+    GET & \texttt{/api/beds} & Lister tous les lits (filtres optionnels : ward, status) \\
+    GET & \texttt{/api/beds/\{id\}} & Obtenir un lit par ID \\
+    POST & \texttt{/api/beds} & Cr\'eer un nouveau lit \\
+    PUT & \texttt{/api/beds/\{id\}/status} & Modifier le statut d'un lit \\
+    DELETE & \texttt{/api/beds/\{id\}} & Supprimer un lit \\
+    POST & \texttt{/api/beds/assign} & Affecter un lit \`a un patient \\
+    POST & \texttt{/api/beds/\{id\}/release} & Lib\'erer un lit (passe en CLEANING) \\
+    GET & \texttt{/api/beds/statistics} & Statistiques globales et par service \\
+    GET & \texttt{/api/beds/assignments/\{bedId\}} & Historique des affectations \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Exemple de requ\^ete -- Cr\'eation d'un lit}
+
+\begin{lstlisting}[language=java, caption={POST /api/beds}]
+{
+  "bedNumber": "URG-101",
+  "ward": "Urgences",
+  "roomNumber": "101",
+  "floor": 1,
+  "bedType": "STANDARD",
+  "notes": "Lit standard aux urgences"
+}
+\end{lstlisting}
+
+\section{Patient Flow Service -- \texttt{/api/patients}}
+
+\begin{longtable}{llp{7cm}}
+    \toprule
+    \textbf{M\'ethode} & \textbf{Endpoint} & \textbf{Description} \\
+    \midrule
+    \endhead
+    GET & \texttt{/api/patients} & Lister les patients \\
+    GET & \texttt{/api/patients/\{id\}} & Obtenir un patient \\
+    POST & \texttt{/api/patients} & Enregistrer un patient \\
+    POST & \texttt{/api/patients/\{id\}/admit} & Admettre un patient \\
+    POST & \texttt{/api/patients/\{id\}/transfer} & Initier un transfert \\
+    POST & \texttt{/api/patients/transfers/\{id\}/complete} & Compl\'eter un transfert \\
+    POST & \texttt{/api/patients/\{id\}/discharge} & Sortie du patient \\
+    GET & \texttt{/api/patients/\{id\}/transfers} & Historique des transferts \\
+    GET & \texttt{/api/patients/statistics} & Statistiques des flux \\
+    \bottomrule
+\end{longtable}
+
+\section{Capacity Prediction Service -- \texttt{/api/capacity}}
+
+\begin{longtable}{llp{7cm}}
+    \toprule
+    \textbf{M\'ethode} & \textbf{Endpoint} & \textbf{Description} \\
+    \midrule
+    \endhead
+    GET & \texttt{/api/capacity/current} & Capacit\'e actuelle globale \\
+    GET & \texttt{/api/capacity/prediction/\{ward\}} & Pr\'ediction pour un service \\
+    GET & \texttt{/api/capacity/predictions} & Toutes les pr\'edictions \\
+    POST & \texttt{/api/capacity/record} & Enregistrer un snapshot d'occupation \\
+    \bottomrule
+\end{longtable}
+
+\subsection{Algorithme de pr\'ediction}
+
+Le service utilise un algorithme bas\'e sur des r\`egles simples :
+
+\begin{enumerate}
+    \item R\'ecup\'eration des enregistrements d'occupation des derni\`eres 48h
+    \item Calcul de la tendance : moyenne des 24 derni\`eres heures vs 24 heures pr\'ec\'edentes
+    \item Classification de la tendance :
+    \begin{itemize}
+        \item Augmentation $> 5\%$ $\rightarrow$ \textbf{INCREASING}
+        \item Diminution $> 5\%$ $\rightarrow$ \textbf{DECREASING}
+        \item Sinon $\rightarrow$ \textbf{STABLE}
+    \end{itemize}
+    \item \'Evaluation du niveau de risque :
+    \begin{itemize}
+        \item Taux $> 90\%$ $\rightarrow$ \textcolor{red}{\textbf{CRITICAL}}
+        \item Taux $> 75\%$ $\rightarrow$ \textcolor{orange}{\textbf{HIGH}}
+        \item Taux $> 50\%$ $\rightarrow$ \textcolor{yellow!80!black}{\textbf{MEDIUM}}
+        \item Sinon $\rightarrow$ \textcolor{green!60!black}{\textbf{LOW}}
+    \end{itemize}
+    \item G\'en\'eration de recommandations adapt\'ees au niveau de risque
+\end{enumerate}
+
+\section{Notification Ops Service -- \texttt{/api/notifications}}
+
+\begin{longtable}{llp{7cm}}
+    \toprule
+    \textbf{M\'ethode} & \textbf{Endpoint} & \textbf{Description} \\
+    \midrule
+    \endhead
+    GET & \texttt{/api/notifications} & Lister les notifications \\
+    POST & \texttt{/api/notifications} & Cr\'eer une notification \\
+    PUT & \texttt{/api/notifications/\{id\}/read} & Marquer comme lue \\
+    GET & \texttt{/api/notifications/ward/\{ward\}/unread} & Non lues par service \\
+    GET & \texttt{/api/notifications/statistics} & Statistiques \\
+    POST & \texttt{/api/notifications/bed-release} & Alerte lib\'eration de lit \\
+    POST & \texttt{/api/notifications/cleaning} & Alerte nettoyage requis \\
+    POST & \texttt{/api/notifications/transfer-alert} & Alerte transfert \\
+    \bottomrule
+\end{longtable}
+
+\section{Dashboard Service -- \texttt{/api/dashboard}}
+
+\begin{longtable}{llp{7cm}}
+    \toprule
+    \textbf{M\'ethode} & \textbf{Endpoint} & \textbf{Description} \\
+    \midrule
+    \endhead
+    GET & \texttt{/api/dashboard} & Tableau de bord complet \\
+    GET & \texttt{/api/dashboard/kpis} & Indicateurs cl\'es uniquement \\
+    \bottomrule
+\end{longtable}
+
+Les KPIs calcul\'es incluent :
+\begin{itemize}
+    \item Taux d'occupation global
+    \item Nombre de lits disponibles
+    \item Taux de transfert
+    \item Temps moyen de rotation des lits
+    \item Nombre de notifications non lues
+\end{itemize}
+
+% ==================== DOCKER ====================
+\chapter{D\'eploiement avec Docker}
+
+\section{Strat\'egie de conteneurisation}
+
+Chaque microservice est packag\'e dans un conteneur Docker ind\'ependant. Le fichier \texttt{docker-compose.yml} orchestre l'ensemble avec :
+
+\begin{itemize}
+    \item \textbf{4 bases MySQL} : Une par service n\'ecessitant de la persistance (bed, patient, capacity, notification)
+    \item \textbf{7 services applicatifs} : Discovery, Gateway + 5 services m\'etier
+    \item \textbf{Health checks} : V\'erification de l'\'etat des services avant d\'emarrage des d\'ependants
+    \item \textbf{R\'eseau d\'edi\'e} : \texttt{hospital-network} en mode bridge
+\end{itemize}
+
+\section{Dockerfile type}
+
+\begin{lstlisting}[caption={Dockerfile d'un microservice}]
+FROM eclipse-temurin:17-jdk-alpine
+VOLUME /tmp
+COPY target/*.jar app.jar
+EXPOSE 8081
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+\end{lstlisting}
+
+\section{Ordre de d\'emarrage}
+
+\begin{enumerate}
+    \item \textbf{Bases de donn\'ees MySQL} (4 instances en parall\`ele)
+    \item \textbf{discovery-service} (Eureka) -- attend le health check
+    \item \textbf{Services m\'etier} (bed, patient, capacity, notification) -- attendent Eureka + leur MySQL
+    \item \textbf{dashboard-service} -- attend tous les services m\'etier
+    \item \textbf{gateway-service} -- attend Eureka
+\end{enumerate}
+
+\section{Commandes de d\'eploiement}
+
+\begin{lstlisting}[language=bash, caption={Commandes pour d\'eployer le syst\`eme}]
+# Compiler tous les services
+mvn clean package -DskipTests
+
+# Lancer tous les conteneurs
+docker compose up --build
+
+# Lancer en arriere-plan
+docker compose up --build -d
+
+# Voir les logs d'un service
+docker compose logs -f bed-management-service
+
+# Arreter tous les conteneurs
+docker compose down
+
+# Arreter et supprimer les volumes
+docker compose down -v
+\end{lstlisting}
+
+\section{Ports expos\'es}
+
+\begin{table}[H]
+    \centering
+    \begin{tabular}{lll}
+        \toprule
+        \textbf{Service} & \textbf{Port interne} & \textbf{Port expos\'e} \\
+        \midrule
+        MySQL (bed) & 3306 & 3307 \\
+        MySQL (patient) & 3306 & 3308 \\
+        MySQL (capacity) & 3306 & 3309 \\
+        MySQL (notification) & 3306 & 3310 \\
+        Eureka & 8761 & 8761 \\
+        Gateway & 8080 & 8080 \\
+        Bed Management & 8081 & 8081 \\
+        Patient Flow & 8082 & 8082 \\
+        Capacity Prediction & 8083 & 8083 \\
+        Notification Ops & 8084 & 8084 \\
+        Dashboard & 8085 & 8085 \\
+        \bottomrule
+    \end{tabular}
+    \caption{Mapping des ports Docker}
+\end{table}
+
+% ==================== GESTION DES CONFLITS ====================
+\chapter{Gestion des Conflits d'Affectation}
+
+\section{Probl\'ematique}
+
+Dans un h\^opital, plusieurs services peuvent demander le m\^eme lit simultan\'ement. Les conflits typiques sont :
+
+\begin{itemize}
+    \item Deux m\'edecins tentent d'affecter le m\^eme lit \`a des patients diff\'erents
+    \item Un lit r\'eserv\'e est demand\'e en urgence par un autre service
+    \item Un patient est transf\'er\'e mais le lit de destination n'est pas encore lib\'er\'e
+\end{itemize}
+
+\section{Strat\'egies impl\'ement\'ees}
+
+\subsection{Machine \`a \'etats stricte}
+
+Le service \texttt{bed-management-service} impl\'emente une machine \`a \'etats qui rejette toute transition invalide. Par exemple :
+\begin{itemize}
+    \item Un lit \texttt{OCCUPIED} ne peut pas \^etre affect\'e \`a un autre patient sans lib\'eration pr\'ealable
+    \item Un lit \texttt{CLEANING} ne peut pas \^etre affect\'e directement
+\end{itemize}
+
+\subsection{V\'erification atomique}
+
+L'affectation d'un lit (\texttt{POST /api/beds/assign}) v\'erifie que le lit est \texttt{FREE} avant de le passer en \texttt{OCCUPIED}. Gr\^ace \`a la transaction JPA, cette op\'eration est atomique au niveau de la base de donn\'ees.
+
+\subsection{Notifications proactives}
+
+Le service de notifications alerte automatiquement les \'equipes concern\'ees lors de :
+\begin{itemize}
+    \item Lib\'eration d'un lit (alerte nettoyage)
+    \item Fin de nettoyage (lit disponible)
+    \item Transfert en cours (pr\'eparation du service de destination)
+    \item Capacit\'e critique (alerte direction)
+\end{itemize}
+
+% ==================== INDICATEURS DE PERFORMANCE ====================
+\chapter{Indicateurs de Performance (KPIs)}
+
+Le \texttt{dashboard-service} calcule et expose les indicateurs suivants :
+
+\begin{table}[H]
+    \centering
+    \begin{tabularx}{\textwidth}{lllX}
+        \toprule
+        \textbf{KPI} & \textbf{Unit\'e} & \textbf{Seuils} & \textbf{Description} \\
+        \midrule
+        Taux d'occupation & \% & $<75\%$ OK, $>90\%$ critique & Ratio lits occup\'es / total \\
+        Lits disponibles & nombre & -- & Nombre de lits au statut FREE \\
+        Taux de transfert & \% & -- & Ratio patients transf\'er\'es / admis \\
+        Rotation des lits & heures & $<4h$ bon & Temps moyen entre lib\'eration et r\'eoccupation \\
+        Notifications non lues & nombre & $>20$ alerte & Notifications en attente de lecture \\
+        \bottomrule
+    \end{tabularx}
+    \caption{Indicateurs cl\'es de performance}
+\end{table}
+
+Chaque KPI est retourn\'e avec :
+\begin{itemize}
+    \item \texttt{name} : Nom de l'indicateur
+    \item \texttt{value} : Valeur actuelle
+    \item \texttt{unit} : Unit\'e de mesure
+    \item \texttt{trend} : Tendance (UP, DOWN, STABLE)
+    \item \texttt{status} : \'Etat (GOOD, WARNING, CRITICAL)
+\end{itemize}
+
+% ==================== TESTS ====================
+\chapter{Tests et Validation}
+
+\section{Collection Postman}
+
+Une collection Postman compl\`ete est fournie dans le dossier \texttt{postman/} avec plus de 40 requ\^etes organis\'ees par service :
+
+\begin{enumerate}
+    \item \textbf{Bed Management} (14 requ\^etes) : CRUD, affectation, lib\'eration, statistiques
+    \item \textbf{Patient Flow} (12 requ\^etes) : Enregistrement, admission, transfert, sortie
+    \item \textbf{Capacity Prediction} (4 requ\^etes) : Capacit\'e, pr\'edictions, enregistrement
+    \item \textbf{Notification Ops} (8 requ\^etes) : CRUD, alertes rapides, statistiques
+    \item \textbf{Dashboard} (2 requ\^etes) : Tableau de bord, KPIs
+    \item \textbf{Via Gateway} (5 requ\^etes) : V\'erification du routage
+\end{enumerate}
+
+\section{Documentation Swagger}
+
+Chaque service dispose d'une interface Swagger accessible \`a :
+\begin{itemize}
+    \item \texttt{http://localhost:8081/swagger-ui.html} -- Bed Management
+    \item \texttt{http://localhost:8082/swagger-ui.html} -- Patient Flow
+    \item \texttt{http://localhost:8083/swagger-ui.html} -- Capacity Prediction
+    \item \texttt{http://localhost:8084/swagger-ui.html} -- Notification Ops
+    \item \texttt{http://localhost:8085/swagger-ui.html} -- Dashboard
+\end{itemize}
+
+\section{Sc\'enario de test int\'egr\'e}
+
+Pour valider le syst\`eme de bout en bout :
+
+\begin{enumerate}
+    \item Cr\'eer 4 lits dans diff\'erents services (Urgences, Cardiologie, P\'ediatrie, Maternit\'e)
+    \item Cr\'eer 2 patients
+    \item Admettre le premier patient aux Urgences
+    \item Affecter le lit URG-101 au patient
+    \item V\'erifier que le lit est en statut OCCUPIED
+    \item Initier un transfert du patient vers la Cardiologie
+    \item Compl\'eter le transfert
+    \item Lib\'erer le lit aux Urgences (passe en CLEANING)
+    \item V\'erifier les notifications g\'en\'er\'ees
+    \item Consulter le tableau de bord pour les statistiques globales
+    \item Sortir le patient (discharge)
+    \item V\'erifier les KPIs finaux
+\end{enumerate}
+
+% ==================== CONCLUSION ====================
+\chapter{Conclusion}
+
+Ce projet a permis de mettre en pratique les concepts fondamentaux de l'architecture distribu\'ee \`a travers un cas d'usage concret : la gestion des lits hospitaliers. Les principaux acquis sont :
+
+\begin{itemize}
+    \item \textbf{Architecture microservices} : D\'ecomposition fonctionnelle en 7 services ind\'ependants, chacun avec sa propre base de donn\'ees et son cycle de vie
+    \item \textbf{Service Discovery} : Utilisation d'Eureka pour l'enregistrement et la d\'ecouverte dynamique des services
+    \item \textbf{API Gateway} : Point d'entr\'ee unique avec routage et CORS
+    \item \textbf{Communication inter-services} : WebClient r\'eactif pour les appels HTTP entre services
+    \item \textbf{Conteneurisation} : Docker et Docker Compose pour le d\'eploiement reproductible
+    \item \textbf{Documentation} : APIs document\'ees avec OpenAPI/Swagger
+\end{itemize}
+
+\subsection*{Am\'eliorations possibles}
+
+\begin{itemize}
+    \item Ajout d'un syst\`eme d'authentification (JWT / OAuth2)
+    \item Impl\'ementation d'un circuit breaker (Resilience4j)
+    \item Utilisation de Kafka pour la communication \'ev\'enementielle entre services
+    \item Int\'egration de mod\`eles ML pour la pr\'ediction de capacit\'e
+    \item Ajout d'une interface web (Angular / React)
+    \item Monitoring avec Prometheus et Grafana
+\end{itemize}
+
+\end{document}

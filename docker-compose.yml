@@ -1,0 +1,210 @@
+version: '3.8'
+
+services:
+  # ==================== DATABASES ====================
+  mysql-bed:
+    image: mysql:8.0
+    container_name: mysql-bed
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: bed_management_db
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-bed-data:/var/lib/mysql
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-patient:
+    image: mysql:8.0
+    container_name: mysql-patient
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: patient_flow_db
+    ports:
+      - "3308:3306"
+    volumes:
+      - mysql-patient-data:/var/lib/mysql
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-capacity:
+    image: mysql:8.0
+    container_name: mysql-capacity
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: capacity_db
+    ports:
+      - "3309:3306"
+    volumes:
+      - mysql-capacity-data:/var/lib/mysql
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mysql-notification:
+    image: mysql:8.0
+    container_name: mysql-notification
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notification_db
+    ports:
+      - "3310:3306"
+    volumes:
+      - mysql-notification-data:/var/lib/mysql
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==================== INFRASTRUCTURE ====================
+  discovery-service:
+    build: ./discovery-service
+    container_name: discovery-service
+    ports:
+      - "8761:8761"
+    networks:
+      - hospital-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  gateway-service:
+    build: ./gateway-service
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+    networks:
+      - hospital-network
+
+  # ==================== MICROSERVICES ====================
+  bed-management-service:
+    build: ./bed-management-service
+    container_name: bed-management-service
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-bed:3306/bed_management_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql-bed:
+        condition: service_healthy
+    networks:
+      - hospital-network
+
+  patient-flow-service:
+    build: ./patient-flow-service
+    container_name: patient-flow-service
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-patient:3306/patient_flow_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql-patient:
+        condition: service_healthy
+    networks:
+      - hospital-network
+
+  capacity-prediction-service:
+    build: ./capacity-prediction-service
+    container_name: capacity-prediction-service
+    ports:
+      - "8083:8083"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-capacity:3306/capacity_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql-capacity:
+        condition: service_healthy
+      bed-management-service:
+        condition: service_started
+    networks:
+      - hospital-network
+
+  notification-ops-service:
+    build: ./notification-ops-service
+    container_name: notification-ops-service
+    ports:
+      - "8084:8084"
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql-notification:3306/notification_db?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useSSL=false
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      mysql-notification:
+        condition: service_healthy
+    networks:
+      - hospital-network
+
+  dashboard-service:
+    build: ./dashboard-service
+    container_name: dashboard-service
+    ports:
+      - "8085:8085"
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://discovery-service:8761/eureka/
+    depends_on:
+      discovery-service:
+        condition: service_healthy
+      bed-management-service:
+        condition: service_started
+      patient-flow-service:
+        condition: service_started
+      capacity-prediction-service:
+        condition: service_started
+      notification-ops-service:
+        condition: service_started
+    networks:
+      - hospital-network
+
+volumes:
+  mysql-bed-data:
+  mysql-patient-data:
+  mysql-capacity-data:
+  mysql-notification-data:
+
+networks:
+  hospital-network:
+    driver: bridge

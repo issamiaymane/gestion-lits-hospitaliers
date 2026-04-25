@@ -1,0 +1,468 @@
+{
+  "info": {
+    "name": "Gestion des Lits Hospitaliers - API Collection",
+    "description": "Collection Postman pour tester toutes les APIs du système de gestion des lits et des flux hospitaliers.\n\nProjet réalisé par : Aymane Issami & Houssam Kichchou\nModule : Architecture Distribuée - Spring Boot Microservices & Docker",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "gateway_url", "value": "http://localhost:8080" },
+    { "key": "bed_url", "value": "http://localhost:8081" },
+    { "key": "patient_url", "value": "http://localhost:8082" },
+    { "key": "capacity_url", "value": "http://localhost:8083" },
+    { "key": "notification_url", "value": "http://localhost:8084" },
+    { "key": "dashboard_url", "value": "http://localhost:8085" }
+  ],
+  "item": [
+    {
+      "name": "1. Bed Management Service",
+      "description": "Gestion des lits hospitaliers - CRUD, affectation, libération, statistiques",
+      "item": [
+        {
+          "name": "1.1 Créer un lit - Urgences Standard",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedNumber\": \"URG-101\",\n  \"ward\": \"Urgences\",\n  \"roomNumber\": \"101\",\n  \"floor\": 1,\n  \"bedType\": \"STANDARD\",\n  \"notes\": \"Lit standard aux urgences\"\n}"
+            },
+            "url": { "raw": "{{bed_url}}/api/beds", "host": ["{{bed_url}}"], "path": ["api", "beds"] }
+          }
+        },
+        {
+          "name": "1.2 Créer un lit - Cardiologie ICU",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedNumber\": \"CAR-201\",\n  \"ward\": \"Cardiologie\",\n  \"roomNumber\": \"201\",\n  \"floor\": 2,\n  \"bedType\": \"ICU\",\n  \"notes\": \"Lit soins intensifs cardiologie\"\n}"
+            },
+            "url": { "raw": "{{bed_url}}/api/beds", "host": ["{{bed_url}}"], "path": ["api", "beds"] }
+          }
+        },
+        {
+          "name": "1.3 Créer un lit - Pédiatrie",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedNumber\": \"PED-301\",\n  \"ward\": \"Pédiatrie\",\n  \"roomNumber\": \"301\",\n  \"floor\": 3,\n  \"bedType\": \"PEDIATRIC\",\n  \"notes\": \"Lit pédiatrique\"\n}"
+            },
+            "url": { "raw": "{{bed_url}}/api/beds", "host": ["{{bed_url}}"], "path": ["api", "beds"] }
+          }
+        },
+        {
+          "name": "1.4 Créer un lit - Maternité",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedNumber\": \"MAT-401\",\n  \"ward\": \"Maternité\",\n  \"roomNumber\": \"401\",\n  \"floor\": 4,\n  \"bedType\": \"MATERNITY\",\n  \"notes\": \"Lit maternité\"\n}"
+            },
+            "url": { "raw": "{{bed_url}}/api/beds", "host": ["{{bed_url}}"], "path": ["api", "beds"] }
+          }
+        },
+        {
+          "name": "1.5 Lister tous les lits",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{bed_url}}/api/beds", "host": ["{{bed_url}}"], "path": ["api", "beds"] }
+          }
+        },
+        {
+          "name": "1.6 Obtenir un lit par ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{bed_url}}/api/beds/1", "host": ["{{bed_url}}"], "path": ["api", "beds", "1"] }
+          }
+        },
+        {
+          "name": "1.7 Lister les lits par service (Urgences)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{bed_url}}/api/beds?ward=Urgences",
+              "host": ["{{bed_url}}"],
+              "path": ["api", "beds"],
+              "query": [{ "key": "ward", "value": "Urgences" }]
+            }
+          }
+        },
+        {
+          "name": "1.8 Lister les lits libres",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{bed_url}}/api/beds?status=FREE",
+              "host": ["{{bed_url}}"],
+              "path": ["api", "beds"],
+              "query": [{ "key": "status", "value": "FREE" }]
+            }
+          }
+        },
+        {
+          "name": "1.9 Affecter un lit à un patient",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedId\": 1,\n  \"patientId\": 1,\n  \"assignedBy\": \"Dr. Amrani\",\n  \"reason\": \"Admission urgence - douleur thoracique\"\n}"
+            },
+            "url": { "raw": "{{bed_url}}/api/beds/assign", "host": ["{{bed_url}}"], "path": ["api", "beds", "assign"] }
+          }
+        },
+        {
+          "name": "1.10 Mettre un lit en statut RESERVED",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"RESERVED\",\n  \"notes\": \"Réservé pour admission programmée\"\n}"
+            },
+            "url": { "raw": "{{bed_url}}/api/beds/2/status", "host": ["{{bed_url}}"], "path": ["api", "beds", "2", "status"] }
+          }
+        },
+        {
+          "name": "1.11 Libérer un lit",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{bed_url}}/api/beds/1/release", "host": ["{{bed_url}}"], "path": ["api", "beds", "1", "release"] }
+          }
+        },
+        {
+          "name": "1.12 Obtenir les statistiques des lits",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{bed_url}}/api/beds/statistics", "host": ["{{bed_url}}"], "path": ["api", "beds", "statistics"] }
+          }
+        },
+        {
+          "name": "1.13 Historique des affectations d'un lit",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{bed_url}}/api/beds/assignments/1", "host": ["{{bed_url}}"], "path": ["api", "beds", "assignments", "1"] }
+          }
+        },
+        {
+          "name": "1.14 Supprimer un lit",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{bed_url}}/api/beds/4", "host": ["{{bed_url}}"], "path": ["api", "beds", "4"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Patient Flow Service",
+      "description": "Gestion du flux des patients - admission, transfert, sortie",
+      "item": [
+        {
+          "name": "2.1 Créer un patient",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Mohamed\",\n  \"lastName\": \"El Alami\",\n  \"dateOfBirth\": \"1985-03-15\",\n  \"gender\": \"M\",\n  \"nationalId\": \"AB123456\",\n  \"contactPhone\": \"+212612345678\",\n  \"emergencyContact\": \"+212698765432\"\n}"
+            },
+            "url": { "raw": "{{patient_url}}/api/patients", "host": ["{{patient_url}}"], "path": ["api", "patients"] }
+          }
+        },
+        {
+          "name": "2.2 Créer un deuxième patient",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Fatima\",\n  \"lastName\": \"Benani\",\n  \"dateOfBirth\": \"1992-07-22\",\n  \"gender\": \"F\",\n  \"nationalId\": \"CD789012\",\n  \"contactPhone\": \"+212611223344\",\n  \"emergencyContact\": \"+212655667788\"\n}"
+            },
+            "url": { "raw": "{{patient_url}}/api/patients", "host": ["{{patient_url}}"], "path": ["api", "patients"] }
+          }
+        },
+        {
+          "name": "2.3 Lister tous les patients",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{patient_url}}/api/patients", "host": ["{{patient_url}}"], "path": ["api", "patients"] }
+          }
+        },
+        {
+          "name": "2.4 Obtenir un patient par ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{patient_url}}/api/patients/1", "host": ["{{patient_url}}"], "path": ["api", "patients", "1"] }
+          }
+        },
+        {
+          "name": "2.5 Admettre un patient (Urgences)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ward\": \"Urgences\",\n  \"medicalNotes\": \"Douleur thoracique aiguë, suspicion infarctus\"\n}"
+            },
+            "url": { "raw": "{{patient_url}}/api/patients/1/admit", "host": ["{{patient_url}}"], "path": ["api", "patients", "1", "admit"] }
+          }
+        },
+        {
+          "name": "2.6 Admettre le deuxième patient (Pédiatrie)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ward\": \"Pédiatrie\",\n  \"medicalNotes\": \"Fièvre persistante, bilan en cours\"\n}"
+            },
+            "url": { "raw": "{{patient_url}}/api/patients/2/admit", "host": ["{{patient_url}}"], "path": ["api", "patients", "2", "admit"] }
+          }
+        },
+        {
+          "name": "2.7 Transférer un patient (Urgences -> Cardiologie)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"toWard\": \"Cardiologie\",\n  \"reason\": \"Diagnostic confirmé - nécessite soins intensifs cardio\",\n  \"authorizedBy\": \"Dr. Amrani\"\n}"
+            },
+            "url": { "raw": "{{patient_url}}/api/patients/1/transfer", "host": ["{{patient_url}}"], "path": ["api", "patients", "1", "transfer"] }
+          }
+        },
+        {
+          "name": "2.8 Compléter le transfert",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{patient_url}}/api/patients/transfers/1/complete", "host": ["{{patient_url}}"], "path": ["api", "patients", "transfers", "1", "complete"] }
+          }
+        },
+        {
+          "name": "2.9 Sortie d'un patient",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Patient stabilisé, sortie autorisée avec ordonnance de suivi\"\n}"
+            },
+            "url": { "raw": "{{patient_url}}/api/patients/2/discharge", "host": ["{{patient_url}}"], "path": ["api", "patients", "2", "discharge"] }
+          }
+        },
+        {
+          "name": "2.10 Historique des transferts d'un patient",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{patient_url}}/api/patients/1/transfers", "host": ["{{patient_url}}"], "path": ["api", "patients", "1", "transfers"] }
+          }
+        },
+        {
+          "name": "2.11 Patients par service (Urgences)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{patient_url}}/api/patients?ward=Urgences",
+              "host": ["{{patient_url}}"],
+              "path": ["api", "patients"],
+              "query": [{ "key": "ward", "value": "Urgences" }]
+            }
+          }
+        },
+        {
+          "name": "2.12 Statistiques des flux patients",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{patient_url}}/api/patients/statistics", "host": ["{{patient_url}}"], "path": ["api", "patients", "statistics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Capacity Prediction Service",
+      "description": "Prédiction de capacité et taux d'occupation",
+      "item": [
+        {
+          "name": "3.1 Capacité actuelle globale",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{capacity_url}}/api/capacity/current", "host": ["{{capacity_url}}"], "path": ["api", "capacity", "current"] }
+          }
+        },
+        {
+          "name": "3.2 Prédiction pour un service (Urgences)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{capacity_url}}/api/capacity/prediction/Urgences", "host": ["{{capacity_url}}"], "path": ["api", "capacity", "prediction", "Urgences"] }
+          }
+        },
+        {
+          "name": "3.3 Toutes les prédictions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{capacity_url}}/api/capacity/predictions", "host": ["{{capacity_url}}"], "path": ["api", "capacity", "predictions"] }
+          }
+        },
+        {
+          "name": "3.4 Enregistrer un snapshot d'occupation",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ward\": \"Urgences\",\n  \"totalBeds\": 20,\n  \"occupiedBeds\": 15\n}"
+            },
+            "url": { "raw": "{{capacity_url}}/api/capacity/record", "host": ["{{capacity_url}}"], "path": ["api", "capacity", "record"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Notification Ops Service",
+      "description": "Notifications opérationnelles - alertes, nettoyage, brancardage",
+      "item": [
+        {
+          "name": "4.1 Créer une notification générale",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"type\": \"CAPACITY_WARNING\",\n  \"title\": \"Alerte capacité Urgences\",\n  \"message\": \"Le taux d'occupation des urgences dépasse 85%\",\n  \"targetWard\": \"Urgences\",\n  \"priority\": \"HIGH\"\n}"
+            },
+            "url": { "raw": "{{notification_url}}/api/notifications", "host": ["{{notification_url}}"], "path": ["api", "notifications"] }
+          }
+        },
+        {
+          "name": "4.2 Notification libération de lit",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedId\": 1,\n  \"ward\": \"Urgences\"\n}"
+            },
+            "url": { "raw": "{{notification_url}}/api/notifications/bed-release", "host": ["{{notification_url}}"], "path": ["api", "notifications", "bed-release"] }
+          }
+        },
+        {
+          "name": "4.3 Notification nettoyage requis",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bedId\": 1,\n  \"ward\": \"Urgences\"\n}"
+            },
+            "url": { "raw": "{{notification_url}}/api/notifications/cleaning", "host": ["{{notification_url}}"], "path": ["api", "notifications", "cleaning"] }
+          }
+        },
+        {
+          "name": "4.4 Notification alerte transfert",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"patientId\": 1,\n  \"fromWard\": \"Urgences\",\n  \"toWard\": \"Cardiologie\"\n}"
+            },
+            "url": { "raw": "{{notification_url}}/api/notifications/transfer-alert", "host": ["{{notification_url}}"], "path": ["api", "notifications", "transfer-alert"] }
+          }
+        },
+        {
+          "name": "4.5 Lister toutes les notifications",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{notification_url}}/api/notifications", "host": ["{{notification_url}}"], "path": ["api", "notifications"] }
+          }
+        },
+        {
+          "name": "4.6 Notifications non lues (Urgences)",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{notification_url}}/api/notifications/ward/Urgences/unread", "host": ["{{notification_url}}"], "path": ["api", "notifications", "ward", "Urgences", "unread"] }
+          }
+        },
+        {
+          "name": "4.7 Marquer comme lue",
+          "request": {
+            "method": "PUT",
+            "url": { "raw": "{{notification_url}}/api/notifications/1/read", "host": ["{{notification_url}}"], "path": ["api", "notifications", "1", "read"] }
+          }
+        },
+        {
+          "name": "4.8 Statistiques des notifications",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{notification_url}}/api/notifications/statistics", "host": ["{{notification_url}}"], "path": ["api", "notifications", "statistics"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Dashboard Service",
+      "description": "Tableau de bord agrégé et indicateurs clés",
+      "item": [
+        {
+          "name": "5.1 Dashboard complet",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{dashboard_url}}/api/dashboard", "host": ["{{dashboard_url}}"], "path": ["api", "dashboard"] }
+          }
+        },
+        {
+          "name": "5.2 KPIs uniquement",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{dashboard_url}}/api/dashboard/kpis", "host": ["{{dashboard_url}}"], "path": ["api", "dashboard", "kpis"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Via Gateway (port 8080)",
+      "description": "Tester les mêmes endpoints via le API Gateway",
+      "item": [
+        {
+          "name": "6.1 [Gateway] Lister les lits",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/api/beds", "host": ["{{gateway_url}}"], "path": ["api", "beds"] }
+          }
+        },
+        {
+          "name": "6.2 [Gateway] Lister les patients",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/api/patients", "host": ["{{gateway_url}}"], "path": ["api", "patients"] }
+          }
+        },
+        {
+          "name": "6.3 [Gateway] Capacité actuelle",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/api/capacity/current", "host": ["{{gateway_url}}"], "path": ["api", "capacity", "current"] }
+          }
+        },
+        {
+          "name": "6.4 [Gateway] Notifications",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/api/notifications", "host": ["{{gateway_url}}"], "path": ["api", "notifications"] }
+          }
+        },
+        {
+          "name": "6.5 [Gateway] Dashboard",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{gateway_url}}/api/dashboard", "host": ["{{gateway_url}}"], "path": ["api", "dashboard"] }
+          }
+        }
+      ]
+    }
+  ]
+}

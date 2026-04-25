@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-service
+  cloud:
+    gateway:
+      routes:
+        - id: bed-management-service
+          uri: lb://bed-management-service
+          predicates:
+            - Path=/api/beds/**
+        - id: patient-flow-service
+          uri: lb://patient-flow-service
+          predicates:
+            - Path=/api/patients/**
+        - id: capacity-prediction-service
+          uri: lb://capacity-prediction-service
+          predicates:
+            - Path=/api/capacity/**
+        - id: notification-ops-service
+          uri: lb://notification-ops-service
+          predicates:
+            - Path=/api/notifications/**
+        - id: dashboard-service
+          uri: lb://dashboard-service
+          predicates:
+            - Path=/api/dashboard/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "*"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://discovery-service:8761/eureka/
