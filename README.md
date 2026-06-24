@@ -1,4 +1,6 @@
-# Gestion des Lits et des Flux Hospitaliers
+# Gestion des Lits Hospitaliers
+
+> Hospital bed management system with real-time availability tracking, built with Spring Boot microservices. **[Academic]**
 
 **Mini Projet - Architecture Distribuée : Spring Boot Microservices & Docker**
 
